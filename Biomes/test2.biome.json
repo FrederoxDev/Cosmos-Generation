@@ -1,0 +1,12 @@
+{
+    "identifier": "cosmos:test2",
+    "surface_parameters": {
+        "top_material": "blue_ice",
+        "mid_material": "blue_ice",
+        "foundation_material": "stone"
+    },
+    "climate": {
+        "rainfall": 0,
+        "temperature": -1
+    }
+}

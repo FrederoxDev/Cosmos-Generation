@@ -1,0 +1,12 @@
+{
+    "identifier": "cosmos:test3",
+    "surface_parameters": {
+        "top_material": "grass",
+        "mid_material": "dirt",
+        "foundation_material": "stone"
+    },
+    "climate": {
+        "rainfall": 1,
+        "temperature": -1
+    }
+}
