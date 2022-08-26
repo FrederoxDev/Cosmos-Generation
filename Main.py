@@ -1,10 +1,9 @@
-from asyncio import constants
+from amulet.api.chunk import Chunk
+from amulet.api.chunk.biomes import BiomesShape
+from amulet.api.block import Block
+from amulet.api.chunk.biomes import Biomes
 from math import floor
 import time
-from amulet.api.chunk import Chunk
-from amulet.api.block import Block
-from amulet.utils.world_utils import block_coords_to_chunk_coords
-from amulet.api.errors import ChunkDoesNotExist
 import amulet
 import glob
 import opensimplex
@@ -12,12 +11,13 @@ import json
 from loadbar import LoadBar
 
 # Load level
-level = amulet.load_level("PhQFY+iUAAA=")
+level = amulet.load_level("D+kHY4hCAAA=")
 opensimplex.random_seed()
 
 # Parameters
 chunk_height = 60
-width = 100
+width = 50
+planet_offset = 5000
 
 # Data
 blocks = {}
@@ -25,15 +25,27 @@ biomes = []
 
 for file_name in glob.glob(r"Biomes\*.biome.json"):
     with open (file_name, "r") as data:
-        biomes.append(json.load(data))
+        data_dict = json.load(data)
+        flora = []
+
+        for feature in data_dict["flora"]:
+            for i in range(feature["weight"]):
+                flora.append(feature)
+
+        data_dict.update({"features": flora})
+        biomes.append(data_dict)
 
 print(f"Loaded {len(biomes)} biomes")
 
-def GetId(identifier, namespace = "minecraft") -> int:
-    if f"{namespace}:{identifier}" in blocks:
-        return blocks[f"{namespace}:{identifier}"]
+def GetId(id) -> int:
+    if id in blocks:
+        return blocks[f"{id}"]
+
+    namespace = id.split(":")[0]
+    identifier = id.split(":")[1]
     
     block = Block(namespace, identifier, {})
+
     universal = level.translation_manager.get_version("bedrock", (1, 19, 0)).block.to_universal(block)[0]
     id = level.block_palette.get_add_block(universal)
 
@@ -46,8 +58,20 @@ def Get2DNoise(x, z, offset, scale):
         (z + 0.1) / 16 * scale + offset
     )
 
-def GetBlock(biome, y, ground_height) -> int:
-    if y == 0: return GetId("bedrock")
+def Get3DNoise(x, y, z, offset, scale):
+    return opensimplex.noise3(
+        (x + 0.1) / 16 * scale + offset, 
+        (y + 0.1) / 16 * scale + offset, 
+        (z + 0.1) / 16 * scale + offset
+    )
+
+def GetBlock(biome, y, ground_height, flora) -> int:
+    if y == 0: return GetId("minecraft:bedrock")
+
+    if y == ground_height + 1 and flora > 0:
+        index = floor(flora * len(biome["flora"]))
+
+        return GetId(biome["flora"][index]["block"])
 
     if y == ground_height:
         return GetId(biome["surface_parameters"]["top_material"])
@@ -58,7 +82,7 @@ def GetBlock(biome, y, ground_height) -> int:
     elif y < ground_height:
         return GetId(biome["surface_parameters"]["foundation_material"])
 
-    return GetId("air")
+    return GetId("minecraft:air")
 
 def GetBiome(temperature, rainfall):
     closestDist = -1
@@ -82,17 +106,20 @@ def CreateChunk(cx, cz) -> None:
             offset_x = cx * 16
             offset_z = cz * 16
 
+            # How do I set this entire vertical slice to be a specific biome
+
             height_noise = (Get2DNoise(x + offset_x, z + offset_z, 0, 0.5) + Get2DNoise(x + offset_x, z + offset_z, 1234, 0.25))
 
             temperature = Get2DNoise(x + offset_x, z + offset_z, 3214, 0.2)
             rainfall = Get2DNoise(x + offset_x, z + offset_z, 43155, 0.2)
-
+            flora = Get2DNoise(x + offset_x, z + offset_z, 4315, 1)
+ 
             biome = GetBiome(temperature, rainfall)
 
             ground_height = 45 + floor(10 * height_noise);
 
             for y in range(0, 60):
-                chunk.blocks[x, y, z] = GetBlock(biome, y, ground_height)
+                chunk.blocks[x, y, z] = GetBlock(biome, y, ground_height, flora)
     
     level.put_chunk(chunk, "minecraft:overworld")
     chunk.changed = True
@@ -104,7 +131,7 @@ bar.start()
 
 for x in range(width):
     for z in range(width):
-        CreateChunk(x, z)
+        CreateChunk(x + planet_offset, z + planet_offset)
         bar.update(step=(x * width) + z)
 
 bar.end()

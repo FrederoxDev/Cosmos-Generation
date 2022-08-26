@@ -1,12 +1,28 @@
 {
     "identifier": "cosmos:test",
     "surface_parameters": {
-        "top_material": "snow",
-        "mid_material": "snow",
-        "foundation_material": "stone"
+        "top_material": "minecraft:snow",
+        "mid_material": "minecraft:snow",
+        "foundation_material": "minecraft:stone"
     },
     "climate": {
         "rainfall": 0,
         "temperature": 0
-    }
+    },
+    "flora": [
+        {
+            "block": "minecraft:air",
+            "weight": 7
+        },
+        {
+            "block": "cosmos:frozen_roots",
+            "weight": 3
+        }
+    ],
+    "ores": [
+        {
+            "block": "minecraft:air",
+            "weight": 1
+        }
+    ]
 }
