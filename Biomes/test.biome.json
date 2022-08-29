@@ -12,17 +12,23 @@
     "flora": [
         {
             "block": "minecraft:air",
-            "weight": 7
+            "weight": 3
         },
         {
             "block": "cosmos:frozen_roots",
             "weight": 3
         }
     ],
-    "ores": [
+    "features": [
         {
-            "block": "minecraft:air",
-            "weight": 1
+            "feature_type": "none",
+            "weight": 7
+        },
+        {
+            "feature_type": "tree",
+            "weight": 7,
+            "log": "minecraft:stripped_warped_stem",
+            "leaves": "minecraft:snow"
         }
     ]
 }
