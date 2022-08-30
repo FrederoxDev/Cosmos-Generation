@@ -28,6 +28,7 @@ biomes = []
 modifications = []
 
 for file_name in glob.glob(r"Biomes\*.biome.json"):
+    print(file_name)
     with open (file_name, "r") as data:
         data_dict = json.load(data)
         flora = []
@@ -95,14 +96,23 @@ def MakeTree(world_x, world_y, world_z, min_height, max_height, log, leaves):
             if x == 0 and z == 0: continue
             modifications.append((leaves, world_x + x, world_y + height, world_z + z))
 
+def MakeTallPlant(world_x, world_y, world_z, min_height, max_height, mid, top):
+    height = random.randint(min_height, max_height)
+
+    for i in range(height):
+        modifications.append((mid, world_x, world_y + i, world_z))
+
+    modifications.append((top, world_x, world_y + height, world_z))
+
+
 def GetBlock(biome, x, y, z, ground_height, flora, feature, feature_2) -> int:
     if y == 0: return GetId("minecraft:bedrock")
 
-    if y == ground_height + 1 and flora > 0:
+    if y == ground_height + 1 and flora > 0 and len(biome["flora"]) > 0:
         index = floor(flora * len(biome["flora"]))
         return GetId(biome["flora"][index]["block"])
 
-    elif y == ground_height + 1 and feature > 0:
+    elif y == ground_height + 1 and feature > 0 and len(biome["features"]) > 0:
         if feature_2 > 0.4:
             index = floor(feature * len(biome["features"]))
             feature = biome["features"][index]
@@ -110,6 +120,9 @@ def GetBlock(biome, x, y, z, ground_height, flora, feature, feature_2) -> int:
 
             if feature_type == "tree":
                 MakeTree(x, y, z, 4, 10, feature["log"], feature["leaves"])
+
+            if feature_type == "tall_plant":
+                MakeTallPlant(x, y, z, 4, 10, feature["mid_block"], feature["top_block"])
 
     if y == ground_height:
         return GetId(biome["surface_parameters"]["top_material"])
@@ -174,34 +187,36 @@ for x in range(width):
 
 bar.end()
 
-bar = LoadBar(max=len(modifications), title="Modifications")
-bar.start()
+if len(modifications) > 0:
+    bar = LoadBar(max=len(modifications), title="Modifications")
+    bar.start()
 
-mod_total = 0
+    mod_total = 0
 
-for mod in modifications:
-    block_id = mod[0]
-    x = mod[1]
-    y = mod[2]
-    z = mod[3]
+    for mod in modifications:
+        block_id = mod[0]
+        x = mod[1]
+        y = mod[2]
+        z = mod[3]
 
-    cx = x // 16
-    cz = z // 16
+        cx = x // 16
+        cz = z // 16
+        
+        try:
+            chunk = level.get_chunk(cx, cz, "minecraft:overworld")
+            chunk.blocks[x - (cx * 16), y, z - (cz * 16)] = GetId(block_id)
+
+            level.put_chunk(chunk, "minecraft:overworld")
+            chunk.changed = True
+
+        except ChunkDoesNotExist:
+            pass
+
+        mod_total += 1
+        bar.update(step=mod_total)
+
+    bar.end()
     
-    try:
-        chunk = level.get_chunk(cx, cz, "minecraft:overworld")
-        chunk.blocks[x - (cx * 16), y, z - (cz * 16)] = GetId(block_id)
-
-        level.put_chunk(chunk, "minecraft:overworld")
-        chunk.changed = True
-
-    except ChunkDoesNotExist:
-        pass
-
-    mod_total += 1
-    bar.update(step=mod_total)
-
-bar.end()
 total_time = time.time() - start
 
 print(str(total_time) + "s taken to generate " + str(width * width) + " chunks!")

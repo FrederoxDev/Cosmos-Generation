@@ -1,0 +1,23 @@
+{
+    "identifier": "cosmos:test2",
+    "surface_parameters": {
+        "top_material": "cosmos:frozen_stone",
+        "mid_material": "cosmos:frozen_stone",
+        "foundation_material": "cosmos:frozen_stone"
+    },
+    "climate": {
+        "rainfall": 0,
+        "temperature": 0
+    },
+    "flora": [
+        {
+            "block": "minecraft:air",
+            "weight": 3
+        },
+        {
+            "block": "cosmos:frozen_roots",
+            "weight": 3
+        }
+    ],
+    "features": []
+}

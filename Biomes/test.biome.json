@@ -1,22 +1,22 @@
 {
     "identifier": "cosmos:test",
     "surface_parameters": {
-        "top_material": "minecraft:snow",
-        "mid_material": "minecraft:snow",
-        "foundation_material": "minecraft:stone"
+        "top_material": "cosmos:frozen_stone_grass",
+        "mid_material": "cosmos:frozen_stone",
+        "foundation_material": "cosmos:frozen_stone"
     },
     "climate": {
         "rainfall": 0,
-        "temperature": 0
+        "temperature": 1
     },
     "flora": [
         {
             "block": "minecraft:air",
-            "weight": 3
+            "weight": 5
         },
         {
-            "block": "cosmos:frozen_roots",
-            "weight": 3
+            "block": "cosmos:shrub",
+            "weight": 5
         }
     ],
     "features": [
@@ -25,10 +25,10 @@
             "weight": 7
         },
         {
-            "feature_type": "tree",
+            "feature_type": "tall_plant",
             "weight": 7,
-            "log": "minecraft:stripped_warped_stem",
-            "leaves": "minecraft:snow"
+            "mid_block": "cosmos:vine_planet_mid",
+            "top_block": "cosmos:vine_plant_top"
         }
     ]
 }
