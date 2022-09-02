@@ -1,8 +1,7 @@
 import random
+from traceback import print_tb
 from amulet.api.chunk import Chunk
-from amulet.api.chunk.biomes import BiomesShape
 from amulet.api.block import Block
-from amulet.api.chunk.biomes import Biomes
 from amulet.api.errors import ChunkDoesNotExist 
 from math import floor
 import time
@@ -11,9 +10,22 @@ import glob
 import opensimplex
 import json
 from loadbar import LoadBar
+from os import path, listdir
+from pick import pick
+
+package_name = "Microsoft.MinecraftWindowsBeta_8wekyb3d8bbwe"
+worlds_path = path.expandvars(rf"%localappdata%\Packages\{package_name}\LocalState\games\com.mojang\minecraftWorlds")
+
+world_names = []
+
+for world_folder in listdir(worlds_path):
+    with open(f"{worlds_path}/{world_folder}/levelname.txt", "r") as data:
+        world_names.append(data.read())
+
+option, index = pick(world_names, "Please select the world you would like to generate: ", ">")
 
 # Load level
-level = amulet.load_level("D+kHY4hCAAA=")
+level = amulet.load_level(f"{worlds_path}/{listdir(worlds_path)[index]}")
 opensimplex.random_seed()
 
 # Parameters
@@ -26,30 +38,6 @@ blocks = {}
 biomes = []
 
 modifications = []
-
-for file_name in glob.glob(r"Biomes\*.biome.json"):
-    print(file_name)
-    with open (file_name, "r") as data:
-        data_dict = json.load(data)
-        flora = []
-        features = []
-
-        for feature in data_dict["flora"]:
-            for i in range(feature["weight"]):
-                flora.append(feature)
-
-        for feature in data_dict["features"]:
-            for i in range(feature["weight"]):
-                features.append(feature)
-
-        random.shuffle(flora)
-        random.shuffle(features)
-
-        data_dict.update({"flora": flora})
-        data_dict.update({"features": features})
-        biomes.append(data_dict)
-
-print(f"Loaded {len(biomes)} biomes")
 
 def GetId(id) -> int:
     if id in blocks:
@@ -65,6 +53,44 @@ def GetId(id) -> int:
 
     blocks.update({f"{namespace}:{identifier}": id})
     return id
+
+print("")
+for file_name in glob.glob(r"Biomes\*.biome.json"):
+    with open (file_name, "r") as data:
+        data_dict = json.load(data)
+        flora = []
+        features = []
+
+        GetId(data_dict["surface_parameters"]["top_material"])
+        GetId(data_dict["surface_parameters"]["mid_material"])
+        GetId(data_dict["surface_parameters"]["foundation_material"])
+
+        for feature in data_dict["flora"]:
+            GetId(feature["block"])
+            for i in range(feature["weight"]):
+                flora.append(feature)
+
+        for feature in data_dict["features"]:
+            for i in range(feature["weight"]):
+                features.append(feature)
+
+            if feature["feature_type"] == "tall_plant":
+                GetId(feature["mid_block"])
+                GetId(feature["top_block"])
+
+            elif feature["feature_type"] == "tree":
+                GetId(feature["log"])
+                GetId(feature["leaves"])
+
+        random.shuffle(flora)
+        random.shuffle(features)
+
+        data_dict.update({"flora": flora})
+        data_dict.update({"features": features})
+        biomes.append(data_dict)
+
+    print(f"INFO - Loaded: {file_name}")
+print("")
 
 def Get2DNoise(x, z, offset, scale):
     return opensimplex.noise2(
@@ -220,7 +246,7 @@ if len(modifications) > 0:
 total_time = time.time() - start
 
 print(str(total_time) + "s taken to generate " + str(width * width) + " chunks!")
-print(str(total_time / (width * width) * 1000) + "ms per chunk")
+print(str(total_time / (width * width) * 1000) + "ms per chunk\n")
  
 # Save the data to the level and close it
 level.save()
